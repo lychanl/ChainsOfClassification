@@ -1,4 +1,8 @@
-MakeCC = function(learner, order=NULL) {
+makeCC = function(learner, order=NULL) {
+    #' function creates classifier chain learner
+    #' @param learner learner for a binary classifier that will be used by CC
+    #' @param order the order of the labels in classifier, default will be taken from task
+    #' @return a classifier chain learner
     learner = checkLearner(learner, type = "classif")
     id = paste("multilabel.CC", getLearnerId(learner), sep = ".")
     packs = getLearnerPackages(learner)
@@ -12,6 +16,11 @@ MakeCC = function(learner, order=NULL) {
 }
 
 trainLearner.CCWrapper = function(.learner, .task, .subset = NULL, .weights = NULL, ...) {
+    #' function creates classifier chain
+    #' @param .learner CC learner used to create model
+    #' @param .task a task to train classifier chain
+    #' @return a CC model
+    #' @usage via train(learner, task)
     order = .learner$order
     if (is.null(order)) {
         order = mlr::getTaskTargetNames(task);
@@ -31,6 +40,12 @@ trainLearner.CCWrapper = function(.learner, .task, .subset = NULL, .weights = NU
 }
 
 predictLearner.CCWrapper = function(.learner, .model, .newdata, ...) {
+    #' function makes prediction for newdata
+    #' @param .learner a CC learner
+    #' @param .model a CC model
+    #' @param .newdata data to be evaluated
+    #' @return a prediction for .newdata
+    #' @usage via predict(model, task) or predict(model, data)
     
     models = mlr::getLearnerModel(.model, more.unwrap = FALSE)
     out = matrix(nrow = nrow(.newdata), ncol = length(models), dimnames = list(NULL, names(models)))
