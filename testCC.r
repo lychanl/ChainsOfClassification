@@ -1,15 +1,45 @@
-result = testCC(.testData, .learner, .task) {
-    model = mlr::train(.learner, .task)
-    result_train = mlr::predict(model, .task)
-    result_test = mlr::predict(model, newdata = .testData)
+source("CC.R")
+
+testCC = function(.learner, .task, .resampleName, .iters) {
+    rDesc = makeResampleDesc(.resampleName, iters = .iters)
     
-    as.data.frame(result_train)
-    performance(result_train)
+    res = resample(.learner, .task, rDesc, measures = list(multilabel.hamloss, multilabel.subset01, timepredict))
+
+    print(res)
     
-    as.data.frame(result_test)
-    performance(result_test)
+    return(res)
+}
+
+classifiers = function(.task) {
+    svm = makeLearner("classif.svm")
+    gbm = makeLearner("classif.gbm", distribution="bernoulli")
     
-    dupa = cbind(as.data.frame(result_train), as.data.frame(result_test))
+    our_cc = makeCC(svm)
+    our_cc2 = makeCC(gbm)
     
-    return(dupa)
+    testCC(our_cc, .task, "CV", 5)
+    testCC(our_cc2, .task, "CV", 5)
+    
+    forest = makeLearner("multilabel.randomForestSRC")
+    ferns = makeLearner("multilabel.rFerns")
+    cc = makeMultilabelClassifierChainsWrapper(svm)
+    cc2 = makeMultilabelClassifierChainsWrapper(gbm)
+    br = makeMultilabelBinaryRelevanceWrapper(svm)
+    br2 = makeMultilabelBinaryRelevanceWrapper(gbm)
+    ns = makeMultilabelNestedStackingWrapper(svm)
+    ns2 = makeMultilabelStackingWrapper(gbm)
+    dbr = makeMultilabelDBRWrapper(svm)
+    dbr2 = makeMultilabelDBRWrapper(gbm)
+    
+    testCC(forest, .task, "CV", 5)
+    testCC(ferns, .task, "CV", 5)
+    testCC(cc, .task, "CV", 5)
+    testCC(cc2, .task, "CV", 5)
+    testCC(br, .task, "CV", 5)
+    testCC(br2, .task, "CV", 5)
+    testCC(ns, .task, "CV", 5)
+    testCC(ns2, .task, "CV", 5)
+    testCC(dbr, .task, "CV", 5)
+    testCC(dbr2, .task, "CV", 5)
+    
 }

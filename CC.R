@@ -27,16 +27,18 @@ trainLearner.CCWrapper = function(.learner, .task, .subset = NULL, .weights = NU
     }
     
     models = list()
+    data = mlr::getTaskData(.task)
+    features = data[!(colnames(data) %in% mlr::getTaskTargetNames(.task))]
     
-    for (lab in mlr::getTaskTargetNames(task))
+    for (lab in mlr::getTaskTargetNames(.task))
     {
         ctask = makeClassifTask(id = lab, data = cbind(features, data[lab]), target = lab)
 
-        models[[lab]] = train(learner$next.learner, ctask, weights = NULL)
+        models[[lab]] = train(.learner$next.learner, ctask, weights = NULL)
 
         features = cbind(features, sapply(data[lab], as.numeric))
     }
-    return(makeChainModel(next.model = models, cl = c(learner$model.subclass)))
+    return(makeChainModel(next.model = models, cl = c(.learner$model.subclass)))
 }
 
 predictLearner.CCWrapper = function(.learner, .model, .newdata, ...) {
@@ -55,10 +57,8 @@ predictLearner.CCWrapper = function(.learner, .model, .newdata, ...) {
         prediction = predict(models[[i]], newdata = .newdata, ...)
         if (.learner$predict.type == "response") {
             prediction = as.logical(getPredictionResponse(prediction))
-            print("r")
         } else {
             prediction = getPredictionProbabilities(prediction, cl="TRUE")
-            print("p")
         }
         out[, i] = prediction
         .newdata[names(models)[i]] = as.numeric(prediction)
