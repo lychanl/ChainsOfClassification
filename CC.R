@@ -3,7 +3,7 @@ makeCC = function(learner, order=NULL) {
     #' @param learner learner for a binary classifier that will be used by CC
     #' @param order the order of the labels in classifier, default will be taken from task
     #' @return a classifier chain learner
-    learner = checkLearner(learner, type = "classif")
+    learner = checkLearner(learner, type = "classif", props = "twoclass")
     id = paste("multilabel.CC", getLearnerId(learner), sep = ".")
     packs = getLearnerPackages(learner)
     type = getLearnerType(learner)
@@ -27,12 +27,14 @@ trainLearner.CCWrapper = function(.learner, .task, .subset = NULL, .weights = NU
     }
     
     models = list()
+    .task = subsetTask(.task, subset = .subset)
     data = mlr::getTaskData(.task)
     features = data[!(colnames(data) %in% mlr::getTaskTargetNames(.task))]
     
     for (lab in mlr::getTaskTargetNames(.task))
     {
         ctask = makeClassifTask(id = lab, data = cbind(features, data[lab]), target = lab)
+        ctask$task.desc$class.levels = c(FALSE, TRUE)
 
         models[[lab]] = train(.learner$next.learner, ctask, weights = NULL)
 

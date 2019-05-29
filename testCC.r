@@ -1,4 +1,5 @@
 source("CC.R")
+source("OneClassWrapper.R")
 
 testCC = function(.learner, .task, .resampleName, .iters) {
     rDesc = makeResampleDesc(.resampleName, iters = .iters)
@@ -11,35 +12,49 @@ testCC = function(.learner, .task, .resampleName, .iters) {
 }
 
 classifiers = function(.task) {
-    svm = makeLearner("classif.svm")
+    logreg = makeLearner("classif.logreg")
     gbm = makeLearner("classif.gbm", distribution="bernoulli")
     
-    our_cc = makeCC(svm)
-    our_cc2 = makeCC(gbm)
-    
-    testCC(our_cc, .task, "CV", 5)
-    testCC(our_cc2, .task, "CV", 5)
+    logreg = makeOneClassWrapper(logreg)
+    gbm = makeOneClassWrapper(gbm)
     
     forest = makeLearner("multilabel.randomForestSRC")
     ferns = makeLearner("multilabel.rFerns")
-    cc = makeMultilabelClassifierChainsWrapper(svm)
+    cc = makeMultilabelClassifierChainsWrapper(logreg)
     cc2 = makeMultilabelClassifierChainsWrapper(gbm)
-    br = makeMultilabelBinaryRelevanceWrapper(svm)
+    br = makeMultilabelBinaryRelevanceWrapper(logreg)
     br2 = makeMultilabelBinaryRelevanceWrapper(gbm)
-    ns = makeMultilabelNestedStackingWrapper(svm)
+    ns = makeMultilabelNestedStackingWrapper(logreg)
     ns2 = makeMultilabelStackingWrapper(gbm)
-    dbr = makeMultilabelDBRWrapper(svm)
+    dbr = makeMultilabelDBRWrapper(logreg)
     dbr2 = makeMultilabelDBRWrapper(gbm)
     
-    testCC(forest, .task, "CV", 5)
-    testCC(ferns, .task, "CV", 5)
+    print("cc - logreg")
     testCC(cc, .task, "CV", 5)
+    print("cc - gbm")
     testCC(cc2, .task, "CV", 5)
+    print("forest")
+    testCC(forest, .task, "CV", 5)
+    print("ferns")
+    testCC(ferns, .task, "CV", 5)
+    print("binary relevance - logreg")
     testCC(br, .task, "CV", 5)
+    print("binary relevance - gbm")
     testCC(br2, .task, "CV", 5)
+    print("nested stacking - logreg")
     testCC(ns, .task, "CV", 5)
+    print("nested stacking - gbm")
     testCC(ns2, .task, "CV", 5)
+    print("DBR - logreg")
     testCC(dbr, .task, "CV", 5)
+    print("DBR - gbm")
     testCC(dbr2, .task, "CV", 5)
     
+    our_cc = makeCC(logreg)
+    our_cc2 = makeCC(gbm)
+    
+    print("our cc - logreg")
+    testCC(our_cc, .task, "CV", 5)
+    print("our cc - gbm")
+    testCC(our_cc2, .task, "CV", 5)
 }
